@@ -6,8 +6,15 @@ import uk.ac.ed.inf.ilp.interfaces.LngLatHandling;
 
 public class LngLatHandler implements LngLatHandling {
     public double distanceTo(LngLat startPosition, LngLat endPosition) {
-        return 0;
+
+        double x1 = startPosition.lng();
+        double y1 = startPosition.lat();
+        double x2 = endPosition.lng();
+        double y2 = endPosition.lat();
+
+        return Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
     }
+
 
     public boolean isCloseTo(LngLat startPosition, LngLat otherPosition) {
         return false;
