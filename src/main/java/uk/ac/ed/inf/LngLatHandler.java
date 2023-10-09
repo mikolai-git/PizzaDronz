@@ -5,8 +5,6 @@ import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.interfaces.LngLatHandling;
 
-import java.util.*;
-
 public class LngLatHandler implements LngLatHandling {
     public double distanceTo(LngLat startPosition, LngLat endPosition) {
 
@@ -60,6 +58,7 @@ public class LngLatHandler implements LngLatHandling {
 
     }
 
+    // Helper function for isInRegion. Returns true if the point lies on an edge
     public static boolean pointOnSegment(LngLat position, LngLat start, LngLat end) {
         return (position.lng() == start.lng() && position.lat() == start.lat()) ||
                 (position.lng() == end.lng() && position.lat() == end.lat()) ||
@@ -70,6 +69,13 @@ public class LngLatHandler implements LngLatHandling {
     }
 
     public LngLat nextPosition(LngLat startPosition, double angle) {
-        return null;
+
+        // Calculate the lng and lat components of the coordinate shift, then add to startPosition
+
+        double lngComponent = SystemConstants.DRONE_MOVE_DISTANCE * Math.cos(Math.toRadians(angle));
+        double latComponent = SystemConstants.DRONE_MOVE_DISTANCE * Math.sin(Math.toRadians(angle));
+
+        return new LngLat(startPosition.lng() + lngComponent, startPosition.lat() + latComponent);
+
     }
 }

@@ -28,6 +28,8 @@ public class Main
         LngLat pointIn = new LngLat(-4.192473, 55.526233);
         LngLat pointOut = new LngLat(-6.192473, 65.526233);
 
+        LngLat easyPoint = new LngLat(10, -10);
+
         LngLat [] regionVertices = {point1, point2, point3, point4};
 
         NamedRegion testNamedRegion = new NamedRegion("testRegion", regionVertices);
@@ -41,6 +43,9 @@ public class Main
 
         boolean isInRegionTest = testLngLatHandler.isInRegion(point1, testNamedRegion);
         System.out.println("isInRegion: " + isInRegionTest);
+
+        LngLat nextPosTest = testLngLatHandler.nextPosition(easyPoint, 45);
+        System.out.println("nextPos: " + nextPosTest);
 
     }
 }
