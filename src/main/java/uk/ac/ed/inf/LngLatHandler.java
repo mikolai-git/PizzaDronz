@@ -20,9 +20,8 @@ public class LngLatHandler implements LngLatHandling {
 
     public boolean isCloseTo(LngLat startPosition, LngLat otherPosition) {
 
-        //If points are <= DRONE_IS_CLOSE_DISTANCE, returns true, otherwise returns false
-        return distanceTo(startPosition, otherPosition) <= SystemConstants.DRONE_IS_CLOSE_DISTANCE;
-
+        //If points are < DRONE_IS_CLOSE_DISTANCE, returns true, otherwise returns false
+        return distanceTo(startPosition, otherPosition) < SystemConstants.DRONE_IS_CLOSE_DISTANCE;
     }
 
     public boolean isInCentralArea(LngLat point, NamedRegion centralArea) {
@@ -67,10 +66,8 @@ public class LngLatHandler implements LngLatHandling {
                         position.lat() >= Math.min(start.lat(), end.lat()) &&
                         position.lat() <= Math.max(start.lat(), end.lat()));
     }
-
+    // Calculate the lng and lat components of the coordinate shift, then add to startPosition
     public LngLat nextPosition(LngLat startPosition, double angle) {
-
-        // Calculate the lng and lat components of the coordinate shift, then add to startPosition
 
         double lngComponent = SystemConstants.DRONE_MOVE_DISTANCE * Math.cos(Math.toRadians(angle));
         double latComponent = SystemConstants.DRONE_MOVE_DISTANCE * Math.sin(Math.toRadians(angle));
