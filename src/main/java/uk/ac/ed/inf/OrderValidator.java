@@ -9,6 +9,8 @@ import uk.ac.ed.inf.ilp.interfaces.OrderValidation;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+
 public class OrderValidator implements OrderValidation {
 
     public Order validateOrder(Order orderToValidate, Restaurant[] definedRestaurants) {
@@ -25,38 +27,46 @@ public class OrderValidator implements OrderValidation {
         // Validate expiry date
         if (validateExpiryDateError(orderToValidate.getCreditCardInformation().getCreditCardExpiry())){
             orderToValidate.setOrderValidationCode(OrderValidationCode.EXPIRY_DATE_INVALID);
+            return orderToValidate;
         }
 
         // Validate CVV
         if (validateCvvError(orderToValidate.getCreditCardInformation().getCvv())){
             orderToValidate.setOrderValidationCode(OrderValidationCode.CVV_INVALID);
+            return orderToValidate;
         }
 
         // Validate order total
         if (validateOrderTotalError(orderToValidate.getPriceTotalInPence(), orderToValidate.getPizzasInOrder())){
             orderToValidate.setOrderValidationCode(OrderValidationCode.TOTAL_INCORRECT);
+            return orderToValidate;
         }
 
         // Validate pizza not defined
         if(validatePizzaNotDefinedError(orderToValidate.getPizzasInOrder(), definedRestaurants)){
             orderToValidate.setOrderValidationCode(OrderValidationCode.PIZZA_NOT_DEFINED);
+            return orderToValidate;
         }
 
         // Validate max pizza count
         if(validateMaxPizzaCountError(orderToValidate.getPizzasInOrder())){
             orderToValidate.setOrderValidationCode(OrderValidationCode.MAX_PIZZA_COUNT_EXCEEDED);
+            return orderToValidate;
         }
 
         // Validate all from one menu
         if(validateMultipleRestaurantsError(orderToValidate.getPizzasInOrder(), definedRestaurants)){
             orderToValidate.setOrderValidationCode(OrderValidationCode.PIZZA_FROM_MULTIPLE_RESTAURANTS);
+            return orderToValidate;
         }
 
-        // Validate restaurant open
+        // Validate restaurant closed
         if(validateRestaurantClosedError(orderToValidate, definedRestaurants)){
             orderToValidate.setOrderValidationCode(OrderValidationCode.RESTAURANT_CLOSED);
+            return orderToValidate;
         }
 
+        orderToValidate.setOrderValidationCode(OrderValidationCode.NO_ERROR);
         return orderToValidate;
     }
     // Error functions return true if error was detected, i.e. if validation failed
@@ -73,8 +83,10 @@ public class OrderValidator implements OrderValidation {
 
 
         LocalDate currentDate = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yy");
-        LocalDate date = LocalDate.parse(expiryDate, formatter);
+        int month = Integer.parseInt(expiryDate.substring(0, 2)); // Extract the month
+        int year = Integer.parseInt("20" + expiryDate.substring(3)); // Extract the year and add the century (assuming 20XX)
+
+        LocalDate date = LocalDate.of(year, month, 1); // Set the day to 1
 
         return date.isBefore(currentDate) || !expiryDate.matches(pattern);
     }
@@ -98,13 +110,13 @@ public class OrderValidator implements OrderValidation {
     }
 
     private boolean validatePizzaNotDefinedError(Pizza[] pizzas, Restaurant[] restaurants){
-        int totalLength = 0;
 
-       for (Restaurant restaurant : restaurants){
-            totalLength += restaurant.menu().length;
-       }
+        int totalMenuItems = 0;
+        for (Restaurant restaurant : restaurants) {
+            totalMenuItems += restaurant.menu().length;
+        }
 
-       Pizza[] definedPizzas = {};
+        Pizza[] definedPizzas = new Pizza[totalMenuItems];
        int currentIndex = 0;
 
         for (Restaurant restaurant : restaurants){
@@ -115,10 +127,10 @@ public class OrderValidator implements OrderValidation {
         for (Pizza pizza : pizzas){
             boolean isDefined = false;
             for (Pizza definedPizza : definedPizzas){
-
                 // Will set isDefined to true if pizza is in definedPizzas
-                if (definedPizza == pizza){
+                if (definedPizza == pizza) {
                     isDefined = true;
+                    break;
                 }
             }
             if (!isDefined){
@@ -159,6 +171,7 @@ public class OrderValidator implements OrderValidation {
                 }
             }
         }
+        System.out.println(Arrays.toString(currentMenu));
 
         // find out if all pizzas in order come from one menu, if not return error
         for (Pizza pizza : pizzas){
@@ -171,10 +184,10 @@ public class OrderValidator implements OrderValidation {
                 }
             }
             if (!found) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     private boolean validateRestaurantClosedError(Order order, Restaurant[] restaurants){
@@ -192,10 +205,10 @@ public class OrderValidator implements OrderValidation {
         for (int i = 0; i < menus.length; i++){
             for (int j = 0; j < menus[i].length; j++){
                 Pizza[] menu = menus[i];
-                Pizza pizza = menu[j];
+                Pizza pizza = order.getPizzasInOrder()[j];
 
                 if(pizza.name().equals(menu[i].name())){
-                    currentRestaurantPos= i;
+                    currentRestaurantPos = i;
                     break;
                 }
             }
@@ -216,7 +229,7 @@ public class OrderValidator implements OrderValidation {
             }
         }
 
-        return isOpen;
+        return !isOpen;
 
     }
 

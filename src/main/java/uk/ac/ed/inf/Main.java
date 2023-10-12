@@ -50,23 +50,29 @@ public class Main
 
         Pizza margherita = new Pizza("Margherita", 600);
         Pizza parmigiana = new Pizza("Parmigiana", 800);
+        Pizza parmigiana2 = new Pizza("Parmigiana2", 800);
 
         Pizza meaty = new Pizza("Meaty", 700);
         Pizza veggie = new Pizza("Veggie", 900);
 
-        Pizza [] pizzaPostoMenu = {margherita, parmigiana};
-        Pizza [] testMenu2 = {meaty, veggie};
+        Pizza [] testMenu1 = {margherita, parmigiana};
+        Pizza [] testMenu2 = {meaty, veggie, parmigiana2};
+        Pizza [] testMenu3 = {meaty, veggie};
+        Pizza [] mixMenu = {meaty, veggie, margherita};
 
-        Restaurant testRestaurant1 = new Restaurant("Pizza Posto", pointIn, monToWed, pizzaPostoMenu);
-        Restaurant testRestaurant2 = new Restaurant("Restaurant 2", pointIn, weekdays, testMenu2);
+        Restaurant testRestaurant1 = new Restaurant("Restaurant 1", pointIn, weekdays, testMenu1);
+        Restaurant testRestaurant2 = new Restaurant("Restaurant 2", pointIn, weekdays, testMenu3);
 
         Restaurant [] ourRestaurants = {testRestaurant1, testRestaurant2};
 
-        LocalDate today = LocalDate.of(2023, 10, 10);
+        LocalDate today = LocalDate.of(2023, 10, 12);
 
-        CreditCardInformation testCardValid = new CreditCardInformation("4844446683665696", "09/2028", "596");
+        CreditCardInformation testCardValid = new CreditCardInformation("4844446683665691", "09/28", "596");
 
-        Order testOrder1 = new Order("19514FE0", today, 1400, pizzaPostoMenu, testCardValid);
+        Order testOrder1 = new Order("19514FE0", today, 1400, testMenu1, testCardValid);
+        Order testOrder2 = new Order("19514FE0", today, 2400, testMenu2, testCardValid);
+
+
 
 
 
@@ -83,10 +89,10 @@ public class Main
         LngLat nextPosTest = testLngLatHandler.nextPosition(easyPoint, 45);
         System.out.println("nextPos: " + nextPosTest);
 
+        testOrder1 = testOrderValidator.validateOrder(testOrder2, ourRestaurants);
+        System.out.println(testOrder1.getOrderValidationCode());
 
-        System.out.println(testOrder1.getOrderValidationCode());
-        testOrder1 = testOrderValidator.validateOrder(testOrder1, ourRestaurants);
-        System.out.println(testOrder1.getOrderValidationCode());
+
 
 
     }
