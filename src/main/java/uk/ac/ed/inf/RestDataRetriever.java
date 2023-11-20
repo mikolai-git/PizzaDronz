@@ -12,7 +12,6 @@ import uk.ac.ed.inf.ilp.data.Restaurant;
 import uk.ac.ed.inf.ilp.gsonUtils.*;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -132,10 +131,8 @@ public class RestDataRetriever {
         }
     }
 
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
-    public static List<Order> getOrders(String uri, String date) {
-        uri = uri + "/orders"; // Set the endpoint for central area
+    public List<Order> getOrders(String uri, String date) {
+        uri = uri + "/orders/" + date ; //Set the endpoint for orders on specified date
 
         // Create a Gson instance with the custom serializer and deserializer
         Gson gson = new GsonBuilder()
@@ -158,38 +155,9 @@ public class RestDataRetriever {
                 // Parse JSON data
                 JsonArray jsonArray = JsonParser.parseString(jsonString).getAsJsonArray();
 
-                // Filter objects with the specified date
-                List<JsonElement> filteredOrders = new ArrayList<>();
-                for (JsonElement element : jsonArray) {
-                    JsonObject orderObject = element.getAsJsonObject();
-
-                    // Check if the key "orderDate" exists and the value is not null
-                    if (orderObject.has("orderDate")) {
-                        try {
-                            JsonElement orderDateElement = orderObject.get("orderDate");
-
-                            // Check if the value is not null
-                            if (!orderDateElement.isJsonNull()) {
-                                String orderDateString = orderDateElement.getAsString();
-
-                                // Parse the date string into LocalDate
-                                LocalDate orderDate = LocalDate.parse(orderDateString, DATE_FORMATTER);
-
-                                // Check if the parsed date matches the desired date
-                                if (orderDate.toString().equals(date)) {
-                                    filteredOrders.add(element);
-                                }
-                            }
-                        } catch (Exception e) {
-                            // Print any exception that occurs during parsing
-                            System.err.println("Error parsing order date: " + e.getMessage());
-                        }
-                    }
-                }
-
                 // Convert the filtered orders to Java objects
                 List<Order> orders = new ArrayList<>();
-                for (JsonElement element : filteredOrders) {
+                for (JsonElement element : jsonArray) {
                     try {
                         Order order = gson.fromJson(element, Order.class);
                         orders.add(order);

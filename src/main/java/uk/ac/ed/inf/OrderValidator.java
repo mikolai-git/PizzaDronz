@@ -9,6 +9,7 @@ import uk.ac.ed.inf.ilp.interfaces.OrderValidation;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.YearMonth;
 public class OrderValidator implements OrderValidation {
 
     public Order validateOrder(Order orderToValidate, Restaurant[] definedRestaurants) {
@@ -19,7 +20,6 @@ public class OrderValidator implements OrderValidation {
         // Validate card number
         if (validateCardNumberError(orderToValidate.getCreditCardInformation().getCreditCardNumber())){
             orderToValidate.setOrderValidationCode(OrderValidationCode.CARD_NUMBER_INVALID);
-            return orderToValidate;
         }
 
         // Validate expiry date
@@ -57,8 +57,12 @@ public class OrderValidator implements OrderValidation {
             orderToValidate.setOrderValidationCode(OrderValidationCode.RESTAURANT_CLOSED);
         }
 
+        if(orderToValidate.getOrderValidationCode() == OrderValidationCode.UNDEFINED){
+            orderToValidate.setOrderValidationCode(OrderValidationCode.NO_ERROR);
+        }
         return orderToValidate;
     }
+
     // Error functions return true if error was detected, i.e. if validation failed
     private boolean validateCardNumberError(String cardNumber){
 
@@ -66,17 +70,25 @@ public class OrderValidator implements OrderValidation {
 
     }
 
-    private boolean validateExpiryDateError(String expiryDate){
-
-        // Define a regular expression pattern for "mm/yy" format
+    private boolean validateExpiryDateError(String expiryDate) {
+        // Define a regular expression pattern for "MM/yy" format
         String pattern = "^(0[1-9]|1[0-2])/\\d{2}$";
 
+        // Check if the month in the expiry date is valid (not over 12)
+        int month = Integer.parseInt(expiryDate.split("/")[0]);
+        if (month > 12) {
+            // Invalid month, return false or handle the error accordingly
+            return true;
+        }
 
-        LocalDate currentDate = LocalDate.now();
+        // Use YearMonth to parse the month and year without a specific day
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MM/yy");
-        LocalDate date = LocalDate.parse(expiryDate, formatter);
+        YearMonth expiryYearMonth = YearMonth.parse(expiryDate, formatter);
 
-        return date.isBefore(currentDate) || !expiryDate.matches(pattern);
+        // Get the current month and year
+        YearMonth currentYearMonth = YearMonth.now();
+
+        return expiryYearMonth.isBefore(currentYearMonth) || !expiryDate.matches(pattern);
     }
 
     private boolean validateCvvError(String cvv){
@@ -93,35 +105,42 @@ public class OrderValidator implements OrderValidation {
             totalCount += pizza.priceInPence();
         }
 
+        //Add delivery fee
+        totalCount += 100;
+
         return orderTotal != totalCount;
 
     }
 
-    private boolean validatePizzaNotDefinedError(Pizza[] pizzas, Restaurant[] restaurants){
-        int totalLength = 0;
+    private boolean validatePizzaNotDefinedError(Pizza[] pizzas, Restaurant[] restaurants) {
+        int totalPizzas = 0;
 
-       for (Restaurant restaurant : restaurants){
-            totalLength += restaurant.menu().length;
-       }
+        // Calculate the total number of pizzas
+        for (Restaurant restaurant : restaurants) {
+            totalPizzas += restaurant.menu().length;
+        }
 
-       Pizza[] definedPizzas = {};
-       int currentIndex = 0;
+        // Initialize the definedPizzas array with the calculated size
+        Pizza[] definedPizzas = new Pizza[totalPizzas];
 
-        for (Restaurant restaurant : restaurants){
+        int currentIndex = 0;
+
+        for (Restaurant restaurant : restaurants) {
             System.arraycopy(restaurant.menu(), 0, definedPizzas, currentIndex, restaurant.menu().length);
             currentIndex += restaurant.menu().length;
         }
 
-        for (Pizza pizza : pizzas){
+        for (Pizza pizza : pizzas) {
             boolean isDefined = false;
-            for (Pizza definedPizza : definedPizzas){
+            for (Pizza definedPizza : definedPizzas) {
 
                 // Will set isDefined to true if pizza is in definedPizzas
-                if (definedPizza == pizza){
+                if (definedPizza.name().equals(pizza.name())) {
                     isDefined = true;
+                    break;
                 }
             }
-            if (!isDefined){
+            if (!isDefined) {
                 return true;
             }
         }
@@ -130,52 +149,41 @@ public class OrderValidator implements OrderValidation {
 
     private boolean validateMaxPizzaCountError(Pizza[] pizzas){
 
-        if (!(pizzas.length > 0 && pizzas.length <= 4)){
-            return true;
-        }
-        else{
-            return false;
-        }
+        return !(pizzas.length > 0 && pizzas.length <= 4);
 
     }
 
-    private boolean validateMultipleRestaurantsError(Pizza[] pizzas, Restaurant[] restaurants){
+    private boolean validateMultipleRestaurantsError(Pizza[] pizzas, Restaurant[] restaurants) {
+        int numberOfRestaurants = 0;
 
-        // Create array of menus
-        Pizza[][] menus = new Pizza[restaurants.length][];
+        for (Restaurant restaurant : restaurants) {
+            boolean foundInCurrentRestaurant = false;
 
-        for (int i = 0; i < restaurants.length; i++){
-            menus[i] = restaurants[i].menu();
-        }
+            for (Pizza pizza : pizzas) {
+                for (Pizza p : restaurant.menu()) {
+                    if (pizza.name().equals(p.name())) {
+                        foundInCurrentRestaurant = true;
+                        break;
+                    }
+                }
 
-        Pizza[] currentMenu = null;
-
-        // Establish current menu
-        for (Pizza[] menu : menus){
-            for (Pizza pizza : menu){
-                if(pizza.name().equals(pizzas[0].name())){
-                    currentMenu = menu;
+                if (foundInCurrentRestaurant) {
                     break;
+                }
+            }
+
+            if (foundInCurrentRestaurant) {
+                numberOfRestaurants++;
+                if (numberOfRestaurants > 1) {
+                    return true; // Found in more than one restaurant
                 }
             }
         }
 
-        // find out if all pizzas in order come from one menu, if not return error
-        for (Pizza pizza : pizzas){
-            boolean found = false;
-            assert currentMenu != null;
-            for (Pizza p : currentMenu){
-                if (pizza.name().equals(p.name())){
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-        return true;
+        return false; // Found in only one restaurant or no restaurants
     }
+
+
 
     private boolean validateRestaurantClosedError(Order order, Restaurant[] restaurants){
         LocalDate dateOfOrder = order.getOrderDate();
@@ -188,35 +196,35 @@ public class OrderValidator implements OrderValidation {
         }
 
         // Establish restaurant
-        int currentRestaurantPos = 0;
-        for (int i = 0; i < menus.length; i++){
-            for (int j = 0; j < menus[i].length; j++){
-                Pizza[] menu = menus[i];
-                Pizza pizza = menu[j];
-
-                if(pizza.name().equals(menu[i].name())){
-                    currentRestaurantPos= i;
+        int currentRestaurantPos = -1; // Initialize to an invalid value
+        for (int i = 0; i < menus.length; i++) {
+            for (int j = 0; j < menus[i].length; j++) {
+                Pizza pizza = menus[i][j];
+                if (pizza.name().equals(order.getPizzasInOrder()[0].name())) { // Assuming orderPizzaName is the name of the pizza in the order
+                    currentRestaurantPos = i;
                     break;
                 }
             }
-        }
-
-        Restaurant currentRestaurant = restaurants[currentRestaurantPos];
-
-        // Retrieve open days of restaurant
-
-        DayOfWeek [] openDays = currentRestaurant.openingDays();
-
-        boolean isOpen = false;
-        // Check if day of order is within open days
-        for (DayOfWeek openDay : openDays){
-            if (openDay == dateOfOrder.getDayOfWeek()){
-                isOpen = true;
-                break;
+            if (currentRestaurantPos != -1) {
+                break; // Break out of the outer loop once a match is found
             }
         }
 
-        return isOpen;
+        if (currentRestaurantPos != -1) {
+            Restaurant currentRestaurant = restaurants[currentRestaurantPos];
+
+            DayOfWeek[] openDays = currentRestaurant.openingDays();
+
+            for (DayOfWeek openDay : openDays) {
+                if (openDay == dateOfOrder.getDayOfWeek()) {
+                    return false;
+                }
+            }
+        } else {
+            // Handle the case when the pizza is not found in any menu
+            return true;
+        }
+        return true;
 
     }
 
