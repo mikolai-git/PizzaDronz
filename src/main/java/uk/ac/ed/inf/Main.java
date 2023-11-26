@@ -1,6 +1,6 @@
 package uk.ac.ed.inf;
 
-import uk.ac.ed.inf.ilp.constant.SystemConstants;
+import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Restaurant;
@@ -57,7 +57,13 @@ public class Main {
         orderValidator.validateOrder(order, restaurants);
     }
 
-    Graph graph = new Graph(SystemConstants.DRONE_MOVE_DISTANCE, restaurants);
+    //A* Testing
+    Node startNode = new Node(new LngLat(0, 0));
+    Node goalNode = new Node(new LngLat(5,5));
+
+    List<LngLat> path = AStar.aStar(startNode, goalNode);
+        System.out.println(path);
+
 
     }
 }

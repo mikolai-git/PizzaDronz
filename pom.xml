@@ -23,5 +23,14 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>com.mapbox.mapboxsdk</groupId>
+      <!-- Replace `DESIRED_JAVA_SDK_PACKAGE` with the name of an available package:
+            https://docs.mapbox.com/android/java/guides/#available-packages -->
+      <artifactId>com.mapbox.mapboxsdk:mapbox-sdk-geojson:6.15.0</artifactId>
+      <version>6.15.0</version>
+    </dependency>
   </dependencies>
+
 </project>
